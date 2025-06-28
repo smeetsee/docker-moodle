@@ -1,7 +1,7 @@
 ARG PHP_VERSION
 FROM php:${PHP_VERSION}-fpm-alpine AS php
 RUN apk add --no-cache icu-dev libldap openldap-dev samba-dev gmp-dev
-RUN docker-php-ext-install intl ldap gmp mysqli
+RUN docker-php-ext-install intl ldap gmp mysqli pgsql
 COPY moodle-src /var/www/html
 EXPOSE 9000
 
