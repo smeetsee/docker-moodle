@@ -41,9 +41,9 @@ http {
             sendfile off;
 
             # Router for Moodle 5.1+
-            location / {
-                try_files $uri /r.php;
-            }
+            #location / {
+            #    try_files $uri /r.php;
+            #}
 
             # See https://hstspreload.org/ before uncommenting the line below.
             # add_header Strict-Transport-Security "max-age=15768000; preload;";
