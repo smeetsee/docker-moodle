@@ -106,8 +106,7 @@ jobs:
         id: php_version
         run: |
           # Parse minimum PHP version from moodle-src/lib/phpminimumversionlib.php
-          MIN_PHP=$(grep "minimumversion" moodle-src/lib/phpminimumversionlib.php | head -1 | sed -E \
-            -e "s/.*'(.*)'.*/\1/")
+          MIN_PHP=8.3
           echo "Minimum required PHP version: $MIN_PHP"
           # Extract the major.minor part
           PHP_SERIES=$(echo "$MIN_PHP" | awk -F. '{print $1 "." $2}')
