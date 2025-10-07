@@ -31,7 +31,7 @@ http {
             listen 8080 default;
             server_name ${SERVER_NAME};
 
-            root /var/www/html;
+            root /var/www/html/public;
             index index.php;
 
             # allow larger file uploads and longer script runtimes
@@ -39,6 +39,11 @@ http {
             client_body_timeout 120s;
 
             sendfile off;
+
+            # Router for Moodle 5.1+
+            location / {
+                try_files $uri /r.php;
+            }
 
             # See https://hstspreload.org/ before uncommenting the line below.
             # add_header Strict-Transport-Security "max-age=15768000; preload;";
