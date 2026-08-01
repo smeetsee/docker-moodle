@@ -69,7 +69,7 @@ jobs:
         run: |
           echo "platform_pair=${{ matrix.platform }}" | sed 's#/#-#g' >> $GITHUB_OUTPUT
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
 
       # Install the cosign tool except on PR
       # https://github.com/sigstore/cosign-installer
@@ -97,7 +97,7 @@ jobs:
           echo "MAJOR=$MAJOR" >> $GITHUB_OUTPUT
           echo "MINOR=$MINOR_PADDED" >> $GITHUB_OUTPUT
       - name: Checkout Moodle repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v7
         with:
           repository: moodle/moodle
           ref: MOODLE_${{ steps.parse_version.outputs.MAJOR }}${{ steps.parse_version.outputs.MINOR }}_STABLE
