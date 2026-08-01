@@ -1,0 +1,31 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "enabledManagers": ["regex", "github-actions"],
+  "packageRules": [
+    {
+      "description": "Disable all updates by default",
+      "matchPackageNames": ["/.*/"],
+      "enabled": false
+    },
+    {
+      "description": "Enable only GitHub Actions container images (docker datasource)",
+      "matchManagers": ["github-actions"],
+      "matchDatasources": ["docker"],
+      "enabled": true
+    }
+  ],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^moodle-version\\.env$/"
+      ],
+      "matchStrings": [
+        "^VERSION=(?<currentValue>[^\\r\\n]+)$"
+      ],
+      "depNameTemplate": "moodle/moodle",
+      "datasourceTemplate": "packagist",
+      "extractVersionTemplate": "^v(?<version>.*)$"
+    }
+  ]
+}
