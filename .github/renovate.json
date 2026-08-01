@@ -31,7 +31,10 @@
       ],
       "depNameTemplate": "moodle/moodle",
       "datasourceTemplate": "github-tags",
-      "extractVersionTemplate": "^(?<version>\\d+\\.\\d+\\.\\d+)$"
+      "extractVersionTemplate": "^v(?<version>\\d+\\.\\d+\\.\\d+)$",
+      "registryUrlTemplate": "https://github.com",
+      "sourceUrlTemplate": "https://github.com/moodle/moodle",
+      "versioningTemplate": "semver"
     }
   ]
 }
