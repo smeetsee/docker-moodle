@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "enabledManagers": ["regex", "github-actions"],
+  "enabledManagers": ["custom.regex", "github-actions"],
   "packageRules": [
     {
       "description": "Disable all updates by default",
