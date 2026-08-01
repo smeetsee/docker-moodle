@@ -12,6 +12,12 @@
       "matchManagers": ["github-actions"],
       "matchDatasources": ["docker"],
       "enabled": true
+    },
+    {
+      "description": "Enable moodle/moodle updates from custom regex manager",
+      "matchManagers": ["custom.regex"],
+      "matchPackageNames": ["moodle/moodle"],
+      "enabled": true
     }
   ],
   "customManagers": [
