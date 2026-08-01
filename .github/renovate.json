@@ -30,8 +30,8 @@
         "^VERSION=(?<currentValue>[^\\r\\n]+)$"
       ],
       "depNameTemplate": "moodle/moodle",
-      "datasourceTemplate": "packagist",
-      "extractVersionTemplate": "^v(?<version>.*)$"
+      "datasourceTemplate": "github-tags",
+      "extractVersionTemplate": "^(?<version>\\d+\\.\\d+\\.\\d+)$"
     }
   ]
 }
