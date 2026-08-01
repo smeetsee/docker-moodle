@@ -24,29 +24,7 @@ env:
 
 
 jobs:
-  prepare:
-    runs-on: ubuntu-slim
-    permissions:
-      contents: read
-    outputs:
-      VERSION: ${{ steps.determine_version.outputs.VERSION }}
-    steps:
-      - name: Determine Moodle version
-        id: determine_version
-        run: |
-          if [ -z "${VERSION}" ]; then
-            # Fetch all tags, filter for stable releases, sort, and pick the highest
-            TAGS=$(curl -s "https://api.github.com/repos/moodle/moodle/tags?per_page=1000" | jq -r '.[].name' | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | sed 's/^v//')
-            LATEST=$(echo "$TAGS" | sort -V | tail -n1)
-            echo "VERSION=$LATEST" >> $GITHUB_OUTPUT
-          else
-            echo "VERSION=${VERSION#v}" >> $GITHUB_OUTPUT
-          fi
-        env:
-          VERSION: ${{ env.VERSION }}
-
   docker:
-    needs: prepare
     runs-on: ${{ matrix.platform == 'linux/amd64' && 'ubuntu-latest' || 'ubuntu-24.04-arm' }}
     strategy:
       fail-fast: false
@@ -60,9 +38,8 @@ jobs:
       # This is used to complete the identity challenge
       # with sigstore/fulcio when running outside of PRs.
       id-token: write
-    env:
-      VERSION: ${{ needs.prepare.outputs.VERSION }}
-
+    outputs:
+      VERSION: ${{ steps.parse_version.outputs.VERSION }}
     steps:
       - name: Set platform pair
         id: set_platform_pair
@@ -90,7 +67,8 @@ jobs:
       - name: Parse Moodle major and minor version
         id: parse_version
         run: |
-          VERSION="${{ env.VERSION }}"
+          source moodle-version.env
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           MAJOR=$(echo "$VERSION" | cut -d. -f1)
           MINOR=$(echo "$VERSION" | cut -d. -f2)
           MINOR_PADDED=$(printf "%02d" "$MINOR")
@@ -158,7 +136,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           target: php
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-php:v${{ env.VERSION }}-${{ steps.set_platform_pair.outputs.platform_pair }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-php:v${{ steps.parse_version.outputs.VERSION }}-${{ steps.set_platform_pair.outputs.platform_pair }}
           labels: ${{ steps.meta-php.outputs.labels }}
           outputs: type=image,push=${{ github.event_name != 'pull_request' }}
           file: ./Dockerfile
@@ -172,7 +150,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           target: nginx
           tags: |
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-nginx:v${{ env.VERSION }}-${{ steps.set_platform_pair.outputs.platform_pair }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-nginx:v${{ steps.parse_version.outputs.VERSION }}-${{ steps.set_platform_pair.outputs.platform_pair }}
           labels: ${{ steps.meta-nginx.outputs.labels }}
           outputs: type=image,push=${{ github.event_name != 'pull_request' }}
           file: ./Dockerfile
@@ -198,14 +176,15 @@ jobs:
         run: echo "${{ steps.meta-nginx.outputs.tags }}" | xargs -I {} cosign sign {}@${{ steps.build-and-push-nginx.outputs.digest }} -y
 
   merge:
-    needs: [docker, prepare]
+    needs:
+      - docker
     runs-on: ubuntu-latest
     if: ${{ github.event_name != 'pull_request' }}
     permissions:
       contents: read
       packages: write
     env:
-      VERSION: ${{ needs.prepare.outputs.VERSION }}
+      VERSION: ${{ needs.docker.outputs.VERSION }}
     steps:
       # Login against a Docker registry except on PR
       # https://github.com/docker/login-action
@@ -220,7 +199,6 @@ jobs:
       - name: Determine if this is the latest version
         id: is_latest
         run: |
-          VERSION="${{ env.VERSION }}"
           TAGS=$(curl -s "https://api.github.com/repos/moodle/moodle/tags?per_page=1000" | jq -r '.[].name' | grep -E '^v?[0-9]+\.[0-9]+\.[0-9]+$' | sed 's/^v//')
           LATEST=$(echo "$TAGS" | sort -V | tail -n1)
           if [ "$LATEST" = "$VERSION" ]; then
@@ -228,45 +206,35 @@ jobs:
           else
             echo "is_latest=false" >> $GITHUB_OUTPUT
           fi
-        env:
-          VERSION: ${{ env.VERSION }}
       - name: Create manifest list and push (php)
         run: |
           docker buildx imagetools create \
-            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-php:v${{ env.VERSION }} \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-php:v${{ env.VERSION }}-linux-amd64 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-php:v${{ env.VERSION }}-linux-arm64
-        env:
-          VERSION: ${{ env.VERSION }}
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-php:v${VERSION} \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-php:v${VERSION}-linux-amd64 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-php:v${VERSION}-linux-arm64
       - name: Tag PHP image as latest
         if: steps.is_latest.outputs.is_latest == 'true'
         run: |
           docker buildx imagetools create \
             -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-php:latest \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-php:v${{ env.VERSION }}-linux-amd64 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-php:v${{ env.VERSION }}-linux-arm64
-        env:
-          VERSION: ${{ env.VERSION }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-php:v${VERSION}-linux-amd64 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-php:v${VERSION}-linux-arm64
       - name: Inspect PHP image
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-php:v${{ env.VERSION }}
+          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-php:v${VERSION}
       - name: Create manifest list and push (nginx)
         run: |
           docker buildx imagetools create \
-            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-nginx:v${{ env.VERSION }} \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-nginx:v${{ env.VERSION }}-linux-amd64 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-nginx:v${{ env.VERSION }}-linux-arm64
-        env:
-          VERSION: ${{ env.VERSION }}
+            -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-nginx:v${VERSION} \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-nginx:v${VERSION}-linux-amd64 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-nginx:v${VERSION}-linux-arm64
       - name: Tag nginx image as latest
         if: steps.is_latest.outputs.is_latest == 'true'
         run: |
           docker buildx imagetools create \
             -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-nginx:latest \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-nginx:v${{ env.VERSION }}-linux-amd64 \
-            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-nginx:v${{ env.VERSION }}-linux-arm64
-        env:
-          VERSION: ${{ env.VERSION }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-nginx:v${VERSION}-linux-amd64 \
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-nginx:v${VERSION}-linux-arm64
       - name: Inspect nginx image
         run: |
-          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-nginx:v${{ env.VERSION }}
+          docker buildx imagetools inspect ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-nginx:v${VERSION}
