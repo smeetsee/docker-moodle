@@ -17,6 +17,7 @@
       "description": "Enable moodle/moodle updates from custom regex manager",
       "matchManagers": ["custom.regex"],
       "matchPackageNames": ["moodle/moodle"],
+      "matchDatasources": ["github-tags"],
       "enabled": true
     }
   ],
@@ -31,7 +32,8 @@
       ],
       "depNameTemplate": "moodle/moodle",
       "datasourceTemplate": "github-tags",
-      "extractVersionTemplate": "^(?<version>\\d+\\.\\d+\\.\\d+)$"
+      "extractVersionTemplate": "^v(?<version>\\d+\\.\\d+\\.\\d+)$",
+      "versioningTemplate": "semver"
     }
   ]
 }
