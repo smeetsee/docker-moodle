@@ -31,7 +31,7 @@
       ],
       "depNameTemplate": "moodle/moodle",
       "datasourceTemplate": "github-tags",
-      "extractVersionTemplate": "^(?<version>\\d+\\.\\d+\\.\\d+)$"
+      "extractVersionTemplate": "^v(?<version>\\d+\\.\\d+\\.\\d+)$"
     }
   ]
 }
