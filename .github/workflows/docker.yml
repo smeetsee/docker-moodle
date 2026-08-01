@@ -136,12 +136,12 @@ jobs:
       # https://github.com/docker/metadata-action
       - name: Extract Docker metadata (PHP image)
         id: meta-php
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-php
       - name: Extract Docker metadata (nginx image)
         id: meta-nginx
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-nginx
       
