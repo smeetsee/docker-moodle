@@ -152,7 +152,7 @@ jobs:
       # https://github.com/docker/build-push-action
       - name: Build and push PHP image
         id: build-and-push-php
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           platforms: ${{ matrix.platform }}
@@ -166,7 +166,7 @@ jobs:
             PHP_VERSION=${{ steps.php_version.outputs.PHP_VERSION }}
       - name: Build and push nginx image
         id: build-and-push-nginx
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           platforms: ${{ matrix.platform }}
