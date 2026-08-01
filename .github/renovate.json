@@ -30,8 +30,8 @@
         "^VERSION=(?<currentValue>[^\\r\\n]+)$"
       ],
       "depNameTemplate": "moodle/moodle",
-      "datasourceTemplate": "github-tags",
-      "extractVersionTemplate": "^(?<version>\\d+\\.\\d+\\.\\d+)$"
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver-coerced"
     }
   ]
 }
